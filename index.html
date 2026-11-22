@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Moodle — the mood-reading game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Shippori+Mincho:wght@600;700&family=Rozha+One&family=Bodoni+Moda:ital,wght@0,600;1,600&family=Playfair+Display:ital,wght@0,600;1,600&family=Unbounded:wght@600&family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&family=Archivo:wght@800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0a0f;--s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.075);--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.15);--tx:#f4f1ec;--mu:#a7a2ab;--dim:#6d6873;--a:#ff8fb1;--b:#a78bfa;--disp:'Shippori Mincho';--dw:700;
+--noise:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg)}
+body{color:var(--tx);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.amb{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.amb i{position:absolute;width:80vmax;height:80vmax;border-radius:50%;filter:blur(110px);opacity:.17;transition:background 1s}
+.amb i:first-child{background:var(--a);top:-48vmax;left:-38vmax;animation:dr 24s ease-in-out infinite alternate}
+.amb i:last-child{background:var(--b);bottom:-52vmax;right:-42vmax;animation:dr 28s ease-in-out infinite alternate-reverse}
+@keyframes dr{to{transform:translate(8vmax,6vmax)}}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.06;background-image:var(--noise)}
+#app{position:relative;z-index:1;max-width:440px;margin:0 auto;padding:16px 20px 44px;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+p,h1,h2{margin:0}
+.fade{animation:fd .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes fd{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.top{display:flex;justify-content:space-between;align-items:center;height:40px;margin-bottom:6px}
+.wm{font-size:11px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--mu)}
+.wm::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--b));margin-right:10px;vertical-align:2px}
+.icn{width:36px;height:36px;border-radius:50%;border:1px solid var(--bd);display:grid;place-items:center;color:var(--mu);flex:none}
+.scr{display:flex;flex-direction:column;gap:22px}
+.center{align-items:center;text-align:center}
+.eyebrow,.label{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--mu)}
+.eyebrow em{font-style:normal;color:var(--dim)}
+.label{margin-bottom:12px;display:block}
+.display{font-family:var(--disp),serif;font-weight:var(--dw);font-size:clamp(42px,13vw,60px);line-height:1;letter-spacing:-.015em}
+.display span{display:block;background:linear-gradient(100deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.08em}
+body[data-it="1"] .display span{font-style:italic}
+.brand{font-size:clamp(60px,19vw,84px);line-height:.9}
+.brand i{font-style:normal;background:linear-gradient(100deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.edition{font-family:var(--disp),serif;font-weight:var(--dw);font-size:24px;line-height:1.1;background:linear-gradient(100deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;margin-top:-4px}
+body[data-it="1"] .edition{font-style:italic}
+.display.sm{font-size:clamp(34px,10.5vw,46px)}
+.h2{font-family:var(--disp),serif;font-weight:var(--dw);font-size:27px;line-height:1.15;letter-spacing:-.01em}
+.lede{color:var(--mu);font-size:15px;line-height:1.6}
+.lede b{color:var(--tx);font-weight:600}
+.hero{display:flex;flex-direction:column;gap:14px;padding:16px 0 2px}
+.pair{display:flex}
+.pair .av+.av{margin-left:-12px}
+.av{width:var(--s);height:var(--s);border-radius:50%;flex:none;display:inline-block;overflow:hidden;box-shadow:0 0 0 3px var(--bg)}
+.av svg{width:100%;height:100%;display:block}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -20px;padding:0 20px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--bd);border-radius:99px;font-size:13px;font-weight:500;color:var(--mu);white-space:nowrap;transition:.2s}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--d)}
+.chip.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border:1px solid var(--bd);border-radius:16px;background:var(--s1)}
+.seg button{border-radius:11px;padding:10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;transition:.2s}
+.seg b{font-weight:600;font-size:14px}
+.seg span{font-size:12px;color:var(--dim)}
+.seg .on{background:var(--s2);box-shadow:inset 0 0 0 1px var(--bd2)}
+.seg .on span{color:var(--mu)}
+.panel{background:var(--s1);border:1px solid var(--bd);border-radius:20px;padding:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.plh{display:flex;justify-content:space-between;align-items:baseline}
+.cn{font-size:12px;color:var(--dim)}
+.pl input{width:100%;background:transparent;border:0;border-bottom:1px solid var(--bd2);padding:2px 0 10px;font:inherit;font-size:20px;font-weight:500;color:var(--tx);outline:none;margin-bottom:16px;border-radius:0}
+.pl input::placeholder{color:var(--dim)}
+.pl input:focus{border-color:var(--a)}
+.avs{display:flex;justify-content:space-between;gap:4px}
+.avb{border-radius:50%;padding:2px;border:1.5px solid transparent;transition:.2s;opacity:.5}
+.avb.on{border-color:var(--a);opacity:1}
+.btn{height:56px;border-radius:16px;background:var(--tx);color:var(--bg);font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;transition:transform .15s,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.22;pointer-events:none}
+.btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--bd2)}
+.how summary{list-style:none;font-weight:600;font-size:14px;display:flex;justify-content:space-between;cursor:pointer}
+.how summary::-webkit-details-marker{display:none}
+.how summary::after{content:'+';color:var(--mu)}
+.how[open] summary::after{content:'–'}
+.how ol{margin:14px 0 0;padding-left:18px;color:var(--mu);font-size:14px;line-height:1.65}
+.how li{margin-bottom:6px}.how li b{color:var(--tx);font-weight:600}
+.foot{text-align:center;font-size:12px;color:var(--dim)}
+.hud{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+.hrow{display:flex;align-items:center;gap:12px;height:40px}
+.hrow .eyebrow{flex:1}
+.ps{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+.ps b{font-family:var(--disp),serif;font-weight:var(--dw);font-size:21px;color:var(--tx);font-variant-numeric:tabular-nums}
+.ps .av{box-shadow:0 0 0 1px var(--bd2)}
+.segs{display:flex;gap:4px}
+.segs i{flex:1;height:3px;border-radius:2px;background:var(--bd)}
+.segs i.d{background:var(--dim)}
+.segs i.c{background:linear-gradient(90deg,var(--a),var(--b))}
+.num{font-family:var(--disp),serif;font-weight:var(--dw);font-size:132px;line-height:.85;color:transparent;-webkit-text-stroke:1px var(--bd2);margin-top:12px}
+.priv{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;padding:7px 12px;border-radius:99px;background:var(--s2);border:1px solid var(--bd)}
+.scn{margin:0;font-family:var(--disp),serif;font-weight:var(--dw);font-size:25px;line-height:1.28;letter-spacing:-.01em}
+.scn::before{content:'“';display:block;font-size:52px;line-height:.55;margin-bottom:6px;background:linear-gradient(100deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.qhead{display:flex;flex-direction:column;gap:10px}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mc{position:relative;overflow:hidden;text-align:left;border:1px solid var(--bd);background:var(--s1);border-radius:18px;padding:14px;min-height:122px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;transition:transform .2s,border-color .2s,opacity .3s,background .2s}
+.mc .orb{position:absolute;width:120px;height:120px;top:-52px;right:-44px;border-radius:50%;background:linear-gradient(135deg,var(--g1),var(--g2));filter:blur(24px);opacity:.42;transition:opacity .3s}
+.mc .gl{position:absolute;top:14px;left:14px;color:var(--g1)}
+.mc .ml{font-family:var(--disp),serif;font-weight:var(--dw);font-size:19px;line-height:1.15;position:relative}
+.mc .md{font-size:12px;color:var(--mu);line-height:1.35;position:relative}
+.mc.cmp{min-height:88px;padding:12px}
+.mc.cmp .ml{font-size:15px}
+.mc.cmp .gl{top:12px;left:12px}
+.mc.sel,.mc.lit{border-color:color-mix(in srgb,var(--g1) 70%,transparent);background:color-mix(in srgb,var(--g1) 12%,transparent)}
+.mc.sel .orb,.mc.lit .orb{opacity:.95}
+.mc.lit{transform:scale(1.03)}
+.mc.sel::after{content:'';position:absolute;top:13px;right:13px;width:20px;height:20px;border-radius:50%;background:var(--tx) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230c0a0f' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center/12px no-repeat}
+.mc.wrong{opacity:.2}
+.mc.right{border-color:#7ee2a8;background:rgba(126,226,168,.1)}
+.sticky{position:sticky;bottom:14px;z-index:3}
+.sticky::before{content:'';position:absolute;left:-20px;right:-20px;bottom:-14px;height:100px;background:linear-gradient(transparent,var(--bg) 70%);z-index:-1;pointer-events:none}
+.hintbar{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mu)}
+.tries{display:flex;gap:5px}.tries i{width:8px;height:8px;border-radius:50%;background:var(--tx);transition:.3s}.tries i.x{background:var(--bd2)}
+.hm{position:relative;border-radius:24px;padding:22px;min-height:236px;background:linear-gradient(140deg,var(--g1),var(--g2));color:#120f14;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.hm::before{content:'';position:absolute;inset:0;background-image:var(--noise);opacity:.18;mix-blend-mode:overlay}
+.hm .gl{position:absolute;top:20px;left:20px}
+.hm .av{position:absolute;top:18px;right:18px;box-shadow:0 0 0 2px rgba(255,255,255,.55)}
+.hm-l{font-family:var(--disp),serif;font-weight:var(--dw);font-size:40px;line-height:1.02;letter-spacing:-.02em;position:relative}
+.hm-d{font-size:14px;opacity:.7;margin-top:6px;position:relative}
+.res{display:flex;align-items:center;gap:16px}
+.pts{font-family:var(--disp),serif;font-weight:var(--dw);font-size:46px;line-height:1;background:linear-gradient(100deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;flex:none}
+.res p{color:var(--mu);font-size:14px;line-height:1.45}
+.res p b{color:var(--tx);font-weight:600;display:block}
+.talk p:last-child{font-size:15px;line-height:1.55}
+.bigpts{font-family:var(--disp),serif;font-weight:var(--dw);font-size:120px;line-height:1;background:linear-gradient(100deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;margin-top:36px;padding:0 .05em}
+.row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.row>div{display:flex;flex-direction:column;gap:8px}
+.pill{font-size:12px;font-weight:600;padding:7px 12px;border-radius:99px;border:1px solid var(--bd);color:var(--mu);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tbar{height:2px;background:var(--bd);border-radius:2px;overflow:hidden}
+.tbar div{height:100%;width:100%;background:linear-gradient(90deg,var(--a),var(--b));transition:width 1s linear}
+.mem{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tile{aspect-ratio:3/4;perspective:700px}
+.tile .in{position:relative;width:100%;height:100%;transition:transform .45s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
+.tile.flip .in{transform:rotateY(180deg)}
+.tile .bk,.tile .fr{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:grid;place-items:center}
+.tile .bk{background:repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 5px,transparent 5px 10px),var(--s1);border:1px solid var(--bd)}
+.tile .bk span{width:20px;height:20px;border-radius:50%;border:1px solid var(--bd2);background:radial-gradient(circle,var(--a) 0 2px,transparent 2.5px)}
+.tile .fr{transform:rotateY(180deg);background:linear-gradient(140deg,var(--g1),var(--g2));color:#120f14}
+.tile .fr .av{position:absolute;bottom:6px;right:6px;box-shadow:0 0 0 1.5px rgba(255,255,255,.7)}
+.tile.ok .fr{box-shadow:inset 0 0 0 2px rgba(255,255,255,.85)}
+.hint{font-size:13px;color:var(--mu);text-align:center}
+.track{position:relative;height:64px;border-radius:99px;border:1px solid var(--bd);background:var(--s1);overflow:hidden}
+.track::before{content:'';position:absolute;left:4%;right:4%;top:50%;height:1px;background:var(--bd2)}
+.zone{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:28%;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--a) 24%,transparent),transparent);border-left:1px solid var(--a);border-right:1px solid var(--a);transition:width .4s}
+.mk{position:absolute;top:50%;left:4%;width:16px;height:16px;border-radius:50%;background:var(--tx);transform:translate(-50%,-50%);box-shadow:0 0 0 6px rgba(255,255,255,.08),0 0 26px var(--a)}
+.tk{position:absolute;top:12px;bottom:12px;width:2px;border-radius:2px;transform:translateX(-50%)}
+.msg{text-align:center;font-family:var(--disp),serif;font-weight:var(--dw);font-size:22px;min-height:30px}
+.taps{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tap{height:184px;border-radius:22px;border:1px solid var(--bd);background:var(--s1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:.12s}
+.tap b{font-weight:600;font-size:15px;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tap span{font-size:12px;color:var(--dim)}
+.tap>*{pointer-events:none}
+.tap.hit{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent);transform:scale(.97)}
+.ecwrap{display:grid;place-items:center;padding:4px 0}
+.eorb{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--bd);background:var(--s1);transition:background .2s,transform .2s,box-shadow .2s;color:#120f14}
+.eorb.on{background:linear-gradient(140deg,var(--g1),var(--g2));transform:scale(1.04);box-shadow:0 0 70px color-mix(in srgb,var(--g1) 45%,transparent)}
+.dare{border-radius:24px;padding:1px;background:linear-gradient(140deg,var(--a),rgba(255,255,255,.06) 40%,rgba(255,255,255,.06) 60%,var(--b))}
+.dare-in{border-radius:23px;background:#141117;padding:26px 22px 20px;display:flex;flex-direction:column;gap:20px}
+.dare-in p{font-family:var(--disp),serif;font-weight:var(--dw);font-size:24px;line-height:1.32}
+.by{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mu)}
+.rate{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rb{border:1px solid var(--bd);background:var(--s1);border-radius:16px;padding:16px 8px;display:flex;flex-direction:column;align-items:center;gap:10px;font-size:13px;font-weight:600;text-align:center;line-height:1.25;transition:.15s}
+.rb:active{border-color:var(--a);background:var(--s2)}
+.dots{display:flex;gap:4px}.dots i{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--b))}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.duo .hm{min-height:196px;padding:16px}
+.duo .hm-l{font-size:24px}
+.duo .hm-d{font-size:13px}
+.duo .gl{top:16px;left:16px}
+.duo .av{top:14px;right:14px}
+.ring{width:200px;height:200px}
+.scorewrap{position:relative;display:grid;place-items:center;margin:4px 0}
+.scorewrap div{position:absolute;text-align:center}
+.scorewrap b{display:block;font-family:var(--disp),serif;font-weight:var(--dw);font-size:58px;line-height:1}
+.scorewrap span{font-size:11px;color:var(--mu);letter-spacing:.16em;text-transform:uppercase}
+.stats{display:flex;flex-direction:column;width:100%;text-align:left}
+.stats div{display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--bd);font-size:14px;color:var(--mu)}
+.stats b{color:var(--tx);font-weight:600}
+.board{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.board .panel{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px}
+.board .w{border-color:color-mix(in srgb,var(--a) 60%,transparent);background:color-mix(in srgb,var(--a) 8%,transparent)}
+.board b{font-family:var(--disp),serif;font-weight:var(--dw);font-size:50px;line-height:1}
+.board span{font-size:13px;color:var(--mu);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board em{font-style:normal;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--a);font-weight:700}
+.btns{display:flex;flex-direction:column;gap:10px;width:100%}
+</style>
+</head>
+<body>
+<div class="amb"><i></i><i></i></div><div class="grain"></div>
+<div id="app"></div>
+<script>
+const THEMES={
+ anime:{tab:'🌸 Anime',logo:['Kokoro','Bloom'],tag:'A sweet anime mood game. Read each other\'s feelings, play cute mini-games and fill the love meter.',
+  petals:['#ffc4d6','#ffd9e4','#e6dcff','#ffb3cb'],
+  chars:[
+   {name:'Aiko',hair:'#f6a5c0',dark:'#e27ba1',eye:'#c4557e',style:'buns',fit:'#bfe6d6'},
+   {name:'Ren',hair:'#4d5b8c',dark:'#36416a',eye:'#4f7fc4',style:'short',fit:'#ffd6e3'},
+   {name:'Yuna',hair:'#f7cd7c',dark:'#dfa647',eye:'#b4762a',style:'bob',fit:'#ffbfd0'},
+   {name:'Kaito',hair:'#ea9872',dark:'#c96f4a',eye:'#a8552f',style:'short',fit:'#c6e2ff',props:['ahoge']},
+   {name:'Mei',hair:'#c9b6f2',dark:'#9b84d6',eye:'#7458c2',style:'long',fit:'#fff0b8'},
+   {name:'Hina',hair:'#a6dbe9',dark:'#72b6cc',eye:'#3f8fae',style:'twin',fit:'#ffd0b5',props:['ties']}],
+  moods:{happy:'Sunny',excited:'Sparkly',love:'Smitten',cheeky:'Cheeky',shy:'Flustered',sleepy:'Sleepy',pouty:'Pouty',sad:'Teary'},
+  rounds:{read:['💭','Read My Mood'],memory:['🃏','Mood Memory'],card:['💌','Kokoro Card'],sync:['💓','Heartbeat Sync'],echo:['🎐','Mood Echo'],final:['🌸','Soul Sync Finale']},
+  cardTop:'✿ Kokoro Card ✿',rq:'how cute was that?',rate:['Aww','So cute','Perfect!'],
+  same:['Same wavelength! 💞','Two hearts, one mood.'],
+  win:'takes the Sakura Crown 👑',tie:"It's a tie — season 2 confirmed!",
+  tiers:[['Sakura Soulmates','You read each other like a favourite manga. Main-couple energy.'],['Matcha & Mochi','Different flavours, perfectly paired.'],['Blossoming Buds',"Still discovering each other's little moods — that's the fun part."],['First Episode Crush','Every great romance anime starts slow. Rematch?']],
+  scen:["♡Our date gets cancelled because of sudden rain ☔","♡I steal your hoodie and refuse to give it back","A surprise ice-cream delivery shows up at midnight","♡I reply “ok.” to your long, sweet message","Sharing one tiny umbrella on a crowded street","♡I remember a tiny detail you mentioned months ago","Your alarm rings at 6 AM on a Monday","Someone beats you at your favourite game. Twice.","Someone sneaks a bite of your food without asking","Your favourite anime ends with a sad finale","Someone sends you a cat video at 2 AM","♡I cook dinner for you… but it's slightly burnt","A long hug after a really tiring day","♡I find your childhood photos and can't stop smiling","You win matching keychains at a festival","♡I set my selfie as your phone wallpaper","♡I fall asleep halfway through our movie night","Someone compliments your outfit in front of everyone","Cherry blossoms are blooming outside your window","A surprise picnic is planned just for you","Your joke finally gets a laugh — three days late","You get the window seat on a long train ride"],
+  cards:["Do your most dramatic anime gasp, like you just discovered a huge plot twist.","♡Give your partner a cute anime nickname and explain why it fits.","Narrate what someone in the room is thinking, in a dramatic anime-narrator voice.","Say something sweet in full tsundere mode: “It's not like I like you or anything…”","Strike your best magical-girl transformation pose — sound effects required.","♡Copy your partner's “I'm hungry” face as accurately as you can.","♡Tell your partner which of their moods is your favourite, and why.","Compliment someone using only food words.","♡Act out how your partner looks when they first wake up.","Make a finger heart and hold eye contact for 5 seconds without laughing.","Do a 10-second anime confession under an imaginary cherry tree.","Show your “I'm totally not jealous” face.","Power up like an anime hero charging a final attack — battle cry included."]},
+ bolly:{tab:'🪔 Bollywood',logo:['Filmy','Jodi'],tag:'Full drama, full masti. Read each other\'s mood, perform filmy dares and dance through mini-games.',
+  petals:['#ffb02e','#ff8a00','#ffd166','#e83e8c'],
+  chars:[
+   {name:'Priya',hair:'#2b1a1a',dark:'#1c1010',eye:'#6b3b1f',style:'long',bang:'part',fit:'#e83e8c',skin:'#f2c7a5',props:['tikka','jhumka']},
+   {name:'Arjun',hair:'#2a1c17',dark:'#1a110d',eye:'#5a3420',style:'short',fit:'#f4a300',skin:'#e2ad87',props:['mustache']},
+   {name:'Zoya',hair:'#5a2e1e',dark:'#3e1f14',eye:'#7a4a25',style:'bob',bang:'part',fit:'#0fa3a3',skin:'#d99d78',props:['bindi','jhumka']},
+   {name:'Veer',hair:'#1f1b24',dark:'#141118',eye:'#4a3022',style:'short',fit:'#fff1c9',skin:'#c98d68',props:['shades']},
+   {name:'Tara',hair:'#3a2018',dark:'#26140f',eye:'#6e3e22',style:'bun',bang:'part',fit:'#ff7a3d',skin:'#eab894',props:['gajra','bindi']},
+   {name:'Dev',hair:'#2e2a28',dark:'#1d1a19',eye:'#4f3524',style:'short',fit:'#7b4cc2',skin:'#b97e5b',props:['mustache','ahoge']}],
+  moods:{happy:'Dil Khush',excited:'Full Josh',love:'Pyaar Mein',cheeky:'Nautanki',shy:'Sharmili',sleepy:'Neend Mode',pouty:'Naraaz',sad:'Emotional'},
+  rounds:{read:['💭','Dil Ki Baat'],memory:['🃏','Jodi Memory'],card:['🎭','Filmy Dare'],sync:['🥁','Dhak-Dhak Sync'],echo:['💃','Expression Echo'],final:['🪔','Climax Scene']},
+  cardTop:'🎭 Filmy Dare',rq:'kitna filmy tha?',rate:['Theek hai','Zabardast','Superhit!'],
+  same:['Same dil, same feel! 💞','Jodi ho toh aisi.'],
+  win:'is today\'s Blockbuster 🏆',tie:'Tie! Sequel pakka hai 🎬',
+  tiers:[['Superhit Jodi','Your chemistry deserves a 3-hour film, with interval.'],['Filmy Couple','Thoda drama, thoda pyaar — perfectly balanced.'],['Slow-Burn Love Story','Still reading each other — the best songs come later.'],['First Chai Meeting','Awkward, cute, full of potential. Retake?']],
+  scen:["Your favourite song plays at a wedding and someone drags you to dance","Rain starts while you're on the terrace with hot chai","Mom calls “Beta, khana khaya?” at the worst possible moment","The family WhatsApp group shares your old childhood photo","A relative asks “Shaadi kab karoge?” in front of everyone","You get the last golgappa on the plate","The interval hits right at the biggest twist","You win the antakshari round for your team","The power cuts out right at the movie's climax","Someone takes your seat at the sangeet","Your train is about to leave and you're still running","Someone spoils the climax of the film you were about to watch","The DJ finally plays the song you requested","Mom finds your secret stash of mithai","You're asked to give a surprise speech at a friend's wedding","A stranger at the party praises your dance moves","♡I make masala chai exactly the way you like it","♡I secretly learn the hook step of your favourite song","♡We get stuck in traffic on the way to a big night out","♡I forget our anniversary… but show up with hot jalebis"],
+  cards:["Do a slow-motion entry scene while someone fans your hair.","Deliver any famous filmy dialogue of your choice — full drama, full emotion.","Do the classic arms-wide-open romantic hero pose and hold it for 5 seconds.","Act out a teary farewell at a railway station.","Be the villain: give your most evil laugh and threaten whoever took the last samosa.","Do a TV-serial triple-zoom reaction: “Kya?!” three times, each more shocked.","Commentate the party like a cricket match, in Hinglish.","Dance 10 seconds of any hook step — everyone guesses the song.","Fight 10 imaginary goons in slow motion, hero style.","Recreate a saas-bahu serial showdown with someone in the room.","Celebrate like you just topped the board exams: “Maa, main pass ho gaya!”","♡Propose to your partner using only made-up filmy one-liners.","♡Sing one line of a romantic song to your partner, full emotion."]},
+ holly:{tab:'🎬 Hollywood',logo:['Popcorn','Hearts'],tag:'Lights, camera, feelings! Read the scene, nail the retakes and steal the spotlight.',
+  petals:['#e0a526','#f5d27a','#c81d3a','#e9c46a'],
+  chars:[
+   {name:'Ava',hair:'#f3d58a',dark:'#d9b45e',eye:'#3d7fc2',style:'long',bang:'part',fit:'#c81d3a',skin:'#ffe2cf',props:['stars','shades']},
+   {name:'Cole',hair:'#6b4226',dark:'#4c2e19',eye:'#4d7a3a',style:'short',fit:'#4a6fa5',skin:'#f4c9a8',props:['hat']},
+   {name:'Ruby',hair:'#c8412f',dark:'#9c2e20',eye:'#3f8a5a',style:'bob',fit:'#2f2a2a',skin:'#ffe6d8',props:['stars']},
+   {name:'Max',hair:'#1d1d1d',dark:'#111',eye:'#5a3a26',style:'short',fit:'#e0a526',skin:'#8d5a3b',props:['shades']},
+   {name:'Stella',hair:'#24160f',dark:'#1a0f0a',eye:'#5a3420',style:'afro',bang:'curly',fit:'#b77dff',skin:'#7a4a2f',props:['stars']},
+   {name:'Miles',hair:'#c9c2b8',dark:'#a39b90',eye:'#4f6f9a',style:'short',fit:'#3b3b3b',skin:'#f0c4a0',props:['mustache']}],
+  moods:{happy:'Feel-Good',excited:'Hyped',love:'Rom-Com',cheeky:'Scene Stealer',shy:'Awkward',sleepy:'Slow-Mo',pouty:'Villain Arc',sad:'Tearjerker'},
+  rounds:{read:['🎞️','Read the Scene'],memory:['🃏','Casting Memory'],card:['🎬',"Director's Cut"],sync:['⏱️','Action Cue'],echo:['🔁','Retake Echo'],final:['⭐','Grand Premiere']},
+  cardTop:"🎬 Director's Cut",rq:'how was that performance?',rate:['B-movie','Box office','Award-worthy!'],
+  same:['Same script! 🎬','Perfectly in character, together.'],
+  win:'takes home the Golden Popcorn 🍿',tie:"It's a tie — sequel greenlit! 🎬",
+  tiers:[['Box-Office Power Couple','Critics agree: flawless chemistry.'],['Rom-Com Leads','Banter, timing, a little chaos — a classic.'],['Indie Darlings','Quirky, a bit unpredictable, totally lovable.'],['Meet-Cute Pending','Every great love story needs a sequel. Roll again?']],
+  scen:["Your phone dies right before the big plot reveal","You get a surprise invite to a red-carpet premiere","Someone spoils the season finale for you","A barista spells your name wrong… very creatively","You win a giant teddy bear at the carnival","You're the last one picked for the karaoke duet","The coffee machine breaks on a Monday morning","You trip in front of everyone — in slow motion","You're asked to give a toast you didn't prepare","The popcorn arrives exactly as the movie starts","You find forgotten cash in an old jacket pocket","A thunderstorm hits during movie night","Your flight gets upgraded to first class","The pizza delivery is an hour late","Someone takes the last slice of pizza","Your road trip runs out of snacks halfway","You get cast as the villain in the party game","♡I plan a surprise marathon of your favourite movies","♡We get caught singing loudly in the car at a red light","♡I text you “we need to talk”… about which series to binge next"],
+  cards:["Give an acceptance speech for the award of “Best Snack Eater”.","Do a movie-trailer voiceover: “In a world where…” — about this party.","Nail a superhero landing, then act like it didn't hurt.","Walk away from an imaginary explosion in slow motion. Don't look back.","Play a detective revealing who ate the last slice.","Do a horror-movie scream, then calmly ask for a glass of water.","Be a red-carpet reporter and interview someone in the room.","Act out any famous movie scene — everyone guesses the film.","Deliver your best action-hero one-liner, then exit the room.","Be a zombie trying to order coffee politely.","Freeze-frame and narrate: “Yep, that's me. You're probably wondering how I got here…”","♡Do a rom-com airport run to confess your feelings to your partner.","♡Pitch a movie about your relationship in 15 seconds — title included."]},
+ kitty:{tab:'💅 Kitty Party',logo:['Kitty','Gossip'],tag:'Glam, gossip and full-on masti. Read the mood, play tambola-style memory and serve iconic dares.',
+  petals:['#ec407a','#f8bbd0','#e0b04a','#ce93d8'],
+  chars:[
+   {name:'Naina',hair:'#3a1f1a',dark:'#26140f',eye:'#6e3e22',style:'bob',bang:'part',fit:'#e91e63',skin:'#efc19e',props:['shades','pearls','bindi']},
+   {name:'Rohit',hair:'#241815',dark:'#170f0c',eye:'#5a3420',style:'short',fit:'#fdd835',skin:'#d8a07b',props:['mustache','shades']},
+   {name:'Shalini',hair:'#2b1715',dark:'#1c0e0d',eye:'#6b3b1f',style:'long',bang:'part',fit:'#c9961a',skin:'#d9a07c',props:['jhumka','bindi']},
+   {name:'Kabir',hair:'#2e2a28',dark:'#1d1a19',eye:'#4f3524',style:'short',fit:'#f48fb1',skin:'#b97e5b',props:['ahoge']},
+   {name:'Mallika',hair:'#7a3b2a',dark:'#5a291c',eye:'#6e3e22',style:'bun',bang:'part',fit:'#8e24aa',skin:'#e7b38e',props:['gajra','pearls']},
+   {name:'Ritika',hair:'#1f1212',dark:'#140b0b',eye:'#5a3420',style:'bob',fit:'#00897b',skin:'#c48a65',props:['stars']}],
+  moods:{happy:'Khushi Khushi',excited:'Party Mode',love:'Crush Alert',cheeky:'Gossip Queen',shy:'Sharma Gaye',sleepy:'Lazy Sunday',pouty:'Muh Phula',sad:'Drama Queen'},
+  rounds:{read:['💅','Mood Gossip'],memory:['🃏','Tambola Memory'],card:['🎀','Kitty Dare'],sync:['👠','Thumka Sync'],echo:['💄','Selfie Echo'],final:['👑','Queen of the Kitty']},
+  cardTop:'🎀 Kitty Dare',rq:'kitna fabulous tha?',rate:['Cute','Fabulous','Iconic!'],
+  same:['Same-to-same! 💅','Twinning in mood, darling.'],
+  win:'wins the Kitty Crown 👑',tie:'Tie! Next kitty pe decide hoga 💅',
+  tiers:[['Kitty Power Couple','Gossip-proof, glam and totally in sync.'],['Party Pair','Fun, fabulous and mostly on the same page.'],['Brunch Buddies',"A few mixed signals — nothing a chai can't fix."],['New Member Vibes','Still getting to know each other. Next kitty, rematch!']],
+  scen:["The host serves your favourite chaat","Someone turns up in the exact same outfit as you","You win the tambola full house","The gossip is about you — and you weren't there","Your selfie gets the most likes in the group","The kitty money comes to you this month","Someone RSVPs “maybe” and never shows up","The theme is retro and you nailed the look","You arrive late and everyone's already eating","The DJ plays your request at the kitty","Your phone keeps ringing in the middle of the kitty","You're asked to host next month's kitty","Someone brings the same dish as you to the potluck","A secret leaks from the group chat","The tambola caller skips your number all evening","You win “Best Dressed” at the theme party","Someone praises your new hairstyle in front of everyone","♡I plan a surprise kitty with all your friends","♡I tag along to your kitty just for the drama"],
+  cards:["Do a catwalk across the room like the theme-party queen.","Give a dramatic “Hai, kya baat hai!” reaction to the last thing someone said.","Whisper a made-up scandal in your best gossip voice.","Pose for a “candid” photo — three angles in five seconds.","Call out tambola numbers in your most dramatic voice.","Compliment everyone's outfit in the room, one line each.","Do 10 seconds of thumkas to any song someone hums.","Welcome everyone at the door like a fabulous kitty host.","Show your “I'm not jealous of her outfit” face.","Act out receiving the kitty money — full award-show moment.","Read out “breaking news” about tonight's party.","♡Introduce your partner like a celebrity arriving at the kitty."]},
+ genz:{tab:'📱 Gen Z',logo:['Vibe','Check'],tag:'No cap, just vibes. Read each other\'s mood, survive the meme memory and serve main-character energy.',
+  petals:['#a3e635','#8b5cf6','#f472b6','#facc15'],
+  chars:[
+   {name:'Zara',hair:'#b9a3ff',dark:'#8f73e8',eye:'#6d4fd1',style:'buns',fit:'#a3e635',props:['clips']},
+   {name:'Ash',hair:'#7dd3fc',dark:'#4fb2e0',eye:'#2f7fb8',style:'short',fit:'#1f2937',props:['cap']},
+   {name:'Kia',hair:'#fb7185',dark:'#e1546a',eye:'#b8405a',style:'bob',fit:'#fde047',props:['headphones']},
+   {name:'Neo',hair:'#1f2937',dark:'#111827',eye:'#5a3a26',style:'short',fit:'#8b5cf6',skin:'#8d5a3b',props:['glasses']},
+   {name:'Mira',hair:'#fde68a',dark:'#e9c75e',eye:'#3d7fc2',style:'long',fit:'#f472b6',skin:'#e7b38e',props:['stars','clips']},
+   {name:'Jay',hair:'#1a1410',dark:'#110c09',eye:'#5a3420',style:'afro',bang:'curly',fit:'#34d399',skin:'#6f432a',props:['headphones']}],
+  moods:{happy:'Vibing',excited:'Slay',love:'Down Bad',cheeky:'Lowkey Evil',shy:'Cringe',sleepy:'Low Battery',pouty:'Big Mad',sad:'In My Feels'},
+  rounds:{read:['📱','Read the Vibe'],memory:['🃏','Meme Memory'],card:['🎥','Main Character Dare'],sync:['🎧','Beat Drop Sync'],echo:['🔂','Trend Echo'],final:['✨','Vibe Check Finale']},
+  cardTop:'🎥 Main Character Dare',rq:'did they slay?',rate:['Mid','Valid','Ate. No crumbs.'],
+  same:['Same vibe, no cap! ✨','Literally sharing one brain cell.'],
+  win:'understood the assignment ✨',tie:'Tie. Both valid, honestly.',
+  tiers:[['Certified Soulmates','No cap — you two share one brain cell.'],['Lowkey Iconic','Mostly in sync. The vibes are immaculate.'],['Situationship Energy','Some mixed signals, but the potential is real.'],['Left on Read','Might need to text more. Run it back?']],
+  scen:["Your crush views your story but doesn't reply","Your phone is at 1% and there's no charger","Your post blows up overnight","Someone says your outfit is “giving”","The group chat leaves you on read","Your music recap gets roasted by friends","You get tagged in an unflattering photo","The Wi-Fi drops mid-game","Someone calls you a boomer","A trend you started months ago suddenly goes viral","Your parents discover your secret account","Your online order is delayed by three days","Someone asks you to make an actual phone call","Concert tickets sell out in two minutes","A stranger compliments your fit","Your playlist gets played at the party","Exam results drop on a Friday night","♡I like your three-year-old post at 2 AM","♡I send you 47 reels in a row","♡I soft-launch us on my story"],
+  cards:["Do your best “get ready with me” intro in 10 seconds.","Explain a random object in the room like it's a viral trend.","Start a dramatic “storytime” — but never finish it.","Rate everyone's vibe out of 10, influencer style.","Do a slow-mo main-character walk across the room.","Translate a boring sentence into full Gen Z slang.","Do 10 seconds of any dance trend — everyone guesses which.","Unbox an imaginary package like a top creator.","React to an imaginary DM using only three facial expressions.","Give a “life update” like you're back from a social-media break.","Roast yourself in exactly two sentences.","♡Soft-launch your partner with a dramatic caption, out loud."]},
+ mill:{tab:'☕ Millennial',logo:['Throwback','Hearts'],tag:'Nostalgia, brunch and mild back pain. Read the mood, replay the 2000s and live your best life.',
+  petals:['#eea2ad','#f8d5d9','#a8c8ae','#f3e1b6'],
+  chars:[
+   {name:'Ria',hair:'#5b3a29',dark:'#40281c',eye:'#6e3e22',style:'bob',bang:'part',fit:'#eea2ad',skin:'#efc5a3',props:['glasses']},
+   {name:'Sam',hair:'#3b2a20',dark:'#281c15',eye:'#5a3420',style:'short',fit:'#8fb59a',skin:'#d9a07c',props:['glasses','mustache']},
+   {name:'Nina',hair:'#c08457',dark:'#9c6640',eye:'#4d7a3a',style:'long',fit:'#f5e6c8',props:['stars']},
+   {name:'Rohan',hair:'#2a1d17',dark:'#1a110d',eye:'#4a3022',style:'short',fit:'#7aa5d2',skin:'#b97e5b'},
+   {name:'Tanya',hair:'#6b3e2e',dark:'#4c2b1f',eye:'#6e3e22',style:'bun',bang:'part',fit:'#c4a7e7',skin:'#e2ad87',props:['clips']},
+   {name:'Ishaan',hair:'#1a1a1a',dark:'#0f0f0f',eye:'#4f3524',style:'short',fit:'#e9c46a',skin:'#c98d68',props:['cap']}],
+  moods:{happy:'Best Life',excited:"Can't Even",love:'Heart-Eyes',cheeky:'Sassy',shy:'Awkward Turtle',sleepy:'Need Coffee',pouty:'Not Today',sad:'Nostalgic'},
+  rounds:{read:['☕','Mood Board'],memory:['📼','Throwback Memory'],card:['💿','Nostalgia Dare'],sync:['💃','Dance Break Sync'],echo:['📟','Brunch Echo'],final:['🥑','Avocado Toast Finale']},
+  cardTop:'💿 Nostalgia Dare',rq:'was that peak?',rate:['Meh','Totally rad','Iconic, literally'],
+  same:['Twinning! 🥑','Same mood, same playlist.'],
+  win:'is living their best life 🥂',tie:"Tie! Let's split the brunch bill 🥑",
+  tiers:[['Power Couple Goals','Perfectly synced. Your playlists probably match too.'],['Netflix-and-Snacks Pros','Comfy, cosy and mostly on the same page.'],['Still Buffering','A few mixed signals — like dial-up internet.'],['Swipe Again?','Plenty left to discover. Round two?']],
+  scen:["Your favourite 2000s song comes on at the party","Someone says you're “too old” for a trend","Your avocado toast costs more than lunch","The rent goes up again","You find your old social-media scrapbook from school","Someone suggests a “quick call” that lasts an hour","A school friend sends you a save-the-date","Your houseplants survive a whole month","Someone sends you the cry-laughing emoji","You finally get a full night's sleep","The weekend brunch gets cancelled","An old school friend wants to catch up","You spot a DVD player in a shop","You realise you're the oldest person at the party","Your back hurts from just… sitting","The Wi-Fi password is 20 characters long","♡I make a throwback playlist just for you","♡I suggest a cosy night in instead of going out"],
+  cards:["Hum a 2000s song — everyone guesses it.","Recreate dial-up internet sounds for the room.","Strike your best 2010s selfie pose.","Write an old-school social-media “testimonial” for someone, out loud.","Give a 20-second talk on why avocado toast is worth it.","Explain your job the way your parents describe it.","Dance like it's a 2005 school farewell.","Pretend to set up a family video call — and fail.","Act out adulting: paying bills while smiling through the pain.","Give a “back in my day” speech about anything.","Do a retro dance move for 10 seconds.","♡Name three songs for a mixtape dedicated to your partner."]},
+ corp:{tab:'💼 Corporate',logo:['Mood','Meeting'],tag:'Let\'s align on feelings. Read the room, survive the stand-up and nail the all-hands dare.',
+  petals:['#93c5fd','#bfdbfe','#5eead4','#fcd34d'],
+  chars:[
+   {name:'Anita',hair:'#2b1a1a',dark:'#1c1010',eye:'#6b3b1f',style:'bob',bang:'part',fit:'#1e3a8a',skin:'#e2ad87',props:['glasses','pearls']},
+   {name:'Rahul',hair:'#1f1b24',dark:'#141118',eye:'#4a3022',style:'short',fit:'#334155',skin:'#c98d68',props:['necktie']},
+   {name:'Meera',hair:'#3a2018',dark:'#26140f',eye:'#6e3e22',style:'long',bang:'part',fit:'#0f766e',skin:'#d99d78',props:['bindi']},
+   {name:'Vikram',hair:'#c9c2b8',dark:'#a39b90',eye:'#4f6f9a',style:'short',fit:'#1e293b',skin:'#e8b894',props:['necktie','glasses','mustache']},
+   {name:'Sara',hair:'#5a2e1e',dark:'#3e1f14',eye:'#7a4a25',style:'bun',fit:'#be185d',skin:'#f2c7a5',props:['headphones']},
+   {name:'Arnav',hair:'#2e2a28',dark:'#1d1a19',eye:'#4f3524',style:'short',fit:'#475569',skin:'#b97e5b',props:['necktie','ahoge']}],
+  moods:{happy:'Bonus Day',excited:'Promotion Mode',love:'Obsessed',cheeky:'Office Politics',shy:'Awkward Zoom',sleepy:'Post-Lunch',pouty:'Per My Last Email',sad:'Appraisal Blues'},
+  rounds:{read:['📊','Read the Room'],memory:['🗂️','Spreadsheet Memory'],card:['🎤','All-Hands Dare'],sync:['⏰','Stand-up Sync'],echo:['📎','Process Echo'],final:['🏆','Quarterly Review']},
+  cardTop:'🎤 All-Hands Dare',rq:'rate the presentation:',rate:['Meets expectations','Exceeds expectations','Promote them!'],
+  same:['Fully aligned! 📊','Same page, same slide.'],
+  win:'gets the promotion 🏆',tie:"Tie — let's take it offline 📅",
+  tiers:[['Strategic Partners','100% alignment. Synergy achieved.'],['High-Performing Team','Strong collaboration, a few action items.'],['Needs Alignment',"Let's circle back and sync more often."],['Onboarding Phase',"Still learning each other's processes. Retry next quarter?"]],
+  scen:["A meeting that could have been an email","Your manager pings “Got a minute?”","The appraisal email lands in your inbox","Someone hits reply-all to the entire company","Friday, 6 PM: an “urgent” task arrives","Free pizza appears in the pantry","Your camera turns on by accident during a call","Your idea gets credited to someone else","The Wi-Fi drops during your presentation","You get a shout-out in the team meeting","The office AC is set to Antarctica","Your leave gets approved for a long weekend","You're added to a 7 AM meeting","Someone microwaves fish in the pantry","Your laptop starts updating right before a deadline","The team lunch is on the company","♡I call you in the middle of your important meeting","♡I bring you coffee after a long workday"],
+  cards:["Give a 20-second motivational all-hands speech about snacks.","Present tonight's “quarterly results” with made-up numbers.","Use five corporate buzzwords in one sentence.","Act out unmuting late: “Sorry, you were saying?”","Do an elevator pitch for the sofa you're sitting on.","Give someone constructive feedback… on their dance moves.","Approve a leave request like the most dramatic boss ever.","Reply to an imaginary email with full “per my last email” energy.","Run a 15-second stand-up meeting about tonight's plans.","Accept “Employee of the Month” — awarded to yourself.","Freeze like a lagging video call for 5 seconds.","♡Give your partner a performance review — compliments only."]},
+ college:{tab:'🎒 College',logo:['Hostel','Hearts'],tag:'Canteen chai, last-minute notes and fest-night energy. Read the mood and top the class.',
+  petals:['#fb8500','#ffd166','#93c5fd','#fdba74'],
+  chars:[
+   {name:'Pooja',hair:'#2b1a1a',dark:'#1c1010',eye:'#6b3b1f',style:'twin',fit:'#fb8500',skin:'#e2ad87',props:['ties','glasses']},
+   {name:'Aman',hair:'#1a1a1a',dark:'#0f0f0f',eye:'#4a3022',style:'short',fit:'#2563eb',skin:'#c98d68',props:['cap']},
+   {name:'Sneha',hair:'#3a2018',dark:'#26140f',eye:'#6e3e22',style:'long',bang:'part',fit:'#fde047',skin:'#d99d78',props:['clips']},
+   {name:'Kunal',hair:'#2a1c17',dark:'#1a110d',eye:'#5a3420',style:'short',fit:'#16a34a',skin:'#b97e5b',props:['glasses','ahoge']},
+   {name:'Riya',hair:'#5a2e1e',dark:'#3e1f14',eye:'#7a4a25',style:'bob',fit:'#ec4899',skin:'#f2c7a5',props:['headphones']},
+   {name:'Yash',hair:'#1f1b24',dark:'#141118',eye:'#4f3524',style:'short',fit:'#f97316',skin:'#e2ad87',props:['mustache']}],
+  moods:{happy:'Mast',excited:'Fest Mode',love:'Crush Spotted',cheeky:'Backbencher',shy:'Viva Nerves',sleepy:'Lecture Nap',pouty:'Attendance Short',sad:'Results Day'},
+  rounds:{read:['📝','Read My Mood'],memory:['📚','Exam Cram Memory'],card:['🎒','Hostel Dare'],sync:['🔔','Bell Ring Sync'],echo:['✏️','Notes Echo'],final:['🎓','Convocation Finale']},
+  cardTop:'🎒 Hostel Dare',rq:'kitne marks doge?',rate:['Pass','Distinction','Topper!'],
+  same:['Same-to-same! 🎓','Best friends since first semester.'],
+  win:'tops the class 🎓',tie:'Tie! Re-exam next week 📝',
+  tiers:[['Batch Toppers','Full marks in reading each other.'],['Canteen Besties','Solid scores and plenty of masti.'],['Group Project Partners','Some confusion, but you got through it.'],['First-Week Freshers','Still figuring each other out. Supplementary exam?']],
+  scen:["The professor announces a surprise test","Mess food is actually good today","The attendance-shortage list goes up","Your crush sits next to you in class","The fest DJ plays your song","Your roommate finishes your instant-noodle stash","Results come out at midnight","The class bunk plan gets caught","Your assignment is due in one hour","Someone borrows your notes and never returns them","Canteen chai on a rainy afternoon","You get selected for the fest team","The hostel Wi-Fi stops working","The professor ends class early","Your group-project partner does nothing","A scholarship email lands in your inbox","♡I wait outside the exam hall with chai for you","♡I doodle your name on the back of my notebook"],
+  cards:["Give a viva answer about a random object in the room.","Impersonate the strictest teacher taking attendance.","Shout everyone's order like the canteen counter at lunch rush.","Act out the night before exams — full panic.","Make a grand fest-stage entry with imaginary crowd cheers.","Explain why you were late with the most creative excuse.","Act out bunking class and getting caught.","Pitch a startup idea you came up with in the hostel.","Sing a made-up college anthem.","Introduce yourself like a nervous fresher on day one.","Give a farewell speech to your hostel room.","♡Answer the slam-book question “best quality of my partner” — out loud."]}
+};
+const FAM={happy:'pos',excited:'pos',love:'pos',cheeky:'pos',shy:'soft',sleepy:'soft',pouty:'neg',sad:'neg'},KEYS=Object.keys(FAM);
+const PLANS={
+ couple:[{t:'read',p:0},{t:'read',p:1},{t:'memory'},{t:'card',p:0},{t:'read',p:0},{t:'read',p:1},{t:'sync'},{t:'card',p:1},{t:'echo'},{t:'final'}],
+ party:[{t:'read',p:0},{t:'read',p:1},{t:'memory',p:0},{t:'memory',p:1},{t:'card',p:0},{t:'card',p:1},{t:'sync'},{t:'read',p:0},{t:'read',p:1},{t:'echo',p:0},{t:'echo',p:1},{t:'final'}]};
+const MAX=47;
+const STY={anime:{a:'#ff8fb1',b:'#a78bfa',f:"'Shippori Mincho'",w:700,it:0},bolly:{a:'#ffb347',b:'#ff4f8b',f:"'Rozha One'",w:400,it:0},holly:{a:'#e8c170',b:'#e04456',f:"'Bodoni Moda'",w:600,it:1},kitty:{a:'#f2a7bb',b:'#e7c79a',f:"'Playfair Display'",w:600,it:1},genz:{a:'#c6f432',b:'#a78bfa',f:"'Unbounded'",w:600,it:0},mill:{a:'#f4b6c2',b:'#9cc5a1',f:"'Fraunces'",w:600,it:1},corp:{a:'#6ea8ff',b:'#4fd1c5',f:"'Archivo'",w:800,it:0},college:{a:'#ffb703',b:'#8ecae6',f:"'DM Serif Display'",w:400,it:1}};
+const MD={happy:['#ffd166','#ff9f5a','Light, content, at ease'],excited:['#ffe66d','#ff5fa2',"Buzzing, can't sit still"],love:['#ff7aa6','#b44cff','Warm, soft, heart-eyes'],cheeky:['#7cf2c8','#3fa9ff','Playful, up to something'],shy:['#ffb8cb','#ff6f9f','Flustered, cheeks warm'],sleepy:['#aab7ff','#5c63d9','Slow, cosy, low energy'],pouty:['#ff9a6b','#e0384f','Annoyed, arms crossed'],sad:['#93d5ff','#4a6fe0','A little heavy, teary']};
+const KIND={read:'Mood reading',memory:'Memory',card:'Performance',sync:'Reflex',echo:'Sequence',final:'Finale'};
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s),app=$('#app');
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clean=s=>String(s).replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{2600}-\u{27BF}]/gu,'').replace(/\s{2,}/g,' ').trim();
+const pad=n=>String(n).padStart(2,'0');
+const store={get(k,d){try{return localStorage.getItem(k)??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let TH=store.get('mr_theme','anime'),MODE=store.get('mr_mode','couple');
+if(!THEMES[TH])TH='anime';if(!PLANS[MODE])MODE='couple';
+const T=()=>THEMES[TH];
+const ML=m=>T().moods[m];
+const HP="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z";
+
+/* ---------- audio ---------- */
+let AC=null,muted=false;
+function tone(f=660,d=.12,vol=.05){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(vol,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sfx={tap:()=>tone(720,.06,.04),pop:()=>tone(880,.05,.035),good:()=>{tone(587,.12);setTimeout(()=>tone(880,.18),100)},bad:()=>tone(196,.22,.05)};
+const spk=()=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/>${muted?'<path d="M16 9.5l5 5M21 9.5l-5 5"/>':'<path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>'}</svg>`;
+document.addEventListener('click',e=>{if(e.target.closest('[data-mute]')){muted=!muted;document.querySelectorAll('[data-mute]').forEach(x=>x.innerHTML=spk());if(!muted)sfx.pop()}});
+const LOCK=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+
+/* ---------- mood glyphs (line icons) ---------- */
+const dt=(x,y)=>`<circle cx="${x}" cy="${y}" r="1" fill="currentColor" stroke="none"/>`;
+const ht=(x,y)=>`<path d="M${x} ${y+1.5}l-1.7-1.7a1 1 0 0 1 1.7-1.2a1 1 0 0 1 1.7 1.2z" fill="currentColor" stroke="none"/>`;
+const GL={
+ happy:`<path d="M8 10.6q1.2-1.5 2.4 0M13.6 10.6q1.2-1.5 2.4 0M8.4 14q3.6 3.6 7.2 0"/>`,
+ excited:`<path d="M9.2 8.5v3M7.7 10h3M14.8 8.5v3M13.3 10h3M8.6 13.6h6.8q0 3.7-3.4 3.7t-3.4-3.7z"/>`,
+ love:ht(9.3,10.2)+ht(14.7,10.2)+`<path d="M9 14.6q3 2.7 6 0"/>`,
+ cheeky:dt(15,10.4)+`<path d="M7.9 10.4h2.7M9 14.4q3 2.6 6 0M12.6 15.6q.4 1.9 1.9 1.2"/>`,
+ shy:dt(8.8,10.6)+dt(13.8,10.6)+`<path d="M6.8 13.7l1-1M8.4 13.7l1-1M14.6 13.7l1-1M16.2 13.7l1-1M10 15.9q.5-.7 1 0t1 0t1 0" stroke-width="1.3"/>`,
+ sleepy:`<path d="M8 10.4q1.2 1.3 2.4 0M13.6 10.4q1.2 1.3 2.4 0"/><circle cx="12" cy="15.3" r="1.1"/>`,
+ pouty:dt(9.2,11.2)+dt(14.8,11.2)+`<path d="M7.8 8.4l2.6 1.2M16.2 8.4l-2.6 1.2M9.6 16.2q2.4-2 4.8 0"/>`,
+ sad:dt(9.2,11.2)+dt(14.8,11.2)+`<path d="M7.8 9.7l2.6-1.2M16.2 9.7l-2.6-1.2M9.6 16.4q2.4-2 4.8 0"/><path d="M8.6 13.1q-.9 1.4 0 2q.9-.6 0-2z" fill="currentColor" stroke="none"/>`};
+const glyph=(m,s=26)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/>${GL[m]}</svg>`;
+const gv=m=>`--g1:${MD[m][0]};--g2:${MD[m][1]}`;
+const moodCard=(m,cmp,extra='')=>`<button class="mc ${cmp?'cmp':''}" data-m="${m}" ${extra} style="${gv(m)}"><span class="orb"></span><span class="gl">${glyph(m,cmp?22:26)}</span><span class="ml">${ML(m)}</span>${cmp?'':`<span class="md">${MD[m][2]}</span>`}</button>`;
+const heroMood=(m,c)=>`<div class="hm" style="${gv(m)}"><span class="gl">${glyph(m,44)}</span>${c?av(c,40):''}<span class="hm-l">${ML(m)}</span><span class="hm-d">${MD[m][2]}</span></div>`;
+
+/* ---------- state ---------- */
+function shade(hex,amt){hex=hex.length===4?'#'+[...hex.slice(1)].map(x=>x+x).join(''):hex;const n=parseInt(hex.slice(1),16),f=v=>Math.max(0,Math.min(255,Math.round(amt<0?v*(1+amt):v+(255-v)*amt)));return '#'+[n>>16,n>>8&255,n&255].map(v=>f(v).toString(16).padStart(2,'0')).join('')}
+const GC='#d9a441',KI='#1b1418';
+let _uid=0;
+function face(expr,c){
+ const K=KI,sw=`stroke="${K}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"`,thin=`stroke="${K}" stroke-width=".8"`;
+ const H=c.hair,F=c.fit,SK=c.skin||'#f6dccb',P=c.props||[],st=c.style,part=c.bang==='part';
+ const sleek=`<path d="M32 54C29 34 38 20 50 19.5C62 20 71 34 68 54C67 41 62 31 50.6 28L49.4 28C38 31 33 41 32 54Z" fill="${H}" ${sw}/>`;
+ const swept=`<path d="M32 52C29 34 37 20 50 19.5C62 19.5 71 30 68.5 52C67 42 63 34 56 29.5C52 33 45 37 39 39C36 42 33.5 46 32 52Z" fill="${H}" ${sw}/>`;
+ const fringe=`<path d="M32 50C30 31 39 19.5 50 19.5C61 19.5 70 31 68 50C67.5 44 66.5 40 65 37.5C58 39.2 42 39.2 35 37.5C33.5 40 32.5 44 32 50Z" fill="${H}" ${sw}/>`;
+ const shortH=`<path d="M32.5 47C31 30 40 18.5 51 19C62 19.5 70 28 67.5 47C66.5 40 64 35 60 32.5C54 35.5 45 35.5 38.5 32C35.5 35 33.5 40 32.5 47Z" fill="${H}" ${sw}/>`;
+ let back='',front='';
+ switch(st){
+  case 'long':back=`<path d="M30 46C27 27 38 15.5 50 15.5C62 15.5 73 27 70 46C71 60 74 74 77 90C70 94 62 92 58 86L42 86C38 92 30 94 23 90C26 74 29 60 30 46Z" fill="${H}" ${sw}/>`;front=part?sleek:swept;break;
+  case 'bob':back=`<path d="M30.5 46C28 27 38.5 16 50 16C61.5 16 72 27 69.5 46L70.5 64C66 67 60.5 66.5 58 63L42 63C39.5 66.5 34 67 29.5 64Z" fill="${H}" ${sw}/>`;front=part?sleek:fringe;break;
+  case 'bun':back=`<circle cx="50" cy="15" r="8.5" fill="${H}" ${sw}/>`;front=part?sleek:swept;break;
+  case 'buns':back=`<circle cx="36" cy="19" r="7.5" fill="${H}" ${sw}/><circle cx="64" cy="19" r="7.5" fill="${H}" ${sw}/>`;front=fringe;break;
+  case 'twin':back=`<path d="M34 34C22 40 20 58 24 76C28 69 31 58 33 48Z" fill="${H}" ${sw}/><path d="M66 34C78 40 80 58 76 76C72 69 69 58 67 48Z" fill="${H}" ${sw}/>`;front=fringe+`<circle cx="33.5" cy="36" r="2.3" fill="${F}" ${sw} stroke-width="1"/><circle cx="66.5" cy="36" r="2.3" fill="${F}" ${sw} stroke-width="1"/>`;break;
+  case 'afro':back=`<path d="M28 46C18 40 20 22 32 20C34 10 48 6 56 12C66 8 78 16 76 28C84 34 82 46 72 50Z" fill="${H}" ${sw}/>`;break;
+  default:front=shortH;
+ }
+ const blazer=P.includes('necktie');
+ const body=`<path d="M8 104C10 88 26 81 41 78Q50 84 59 78C74 81 90 88 92 104" fill="${F}" ${sw}/><path d="M30 92Q32 98 31 104M70 92Q68 98 69 104" ${sw} fill="none" opacity=".45"/>`;
+ const neck=`<path d="M44 62L44 80Q50 84 56 80L56 62" fill="${SK}" ${sw}/>`;
+ const coll=blazer?`<path d="M43 79L50 92L57 79" fill="#fff" ${sw}/><path d="M48.6 83L51.4 83L52.2 86L51.4 96L50 98L48.6 96L47.8 86Z" fill="#a3242f" ${sw}/><path d="M41 78L50 97M59 78L50 97" ${sw} fill="none"/>`:`<path d="M42 79Q50 87 58 79" ${sw} fill="none"/>`;
+ const ears=`<path d="M33.5 44Q30 44 30.6 49Q31.2 53 34 53" fill="${SK}" ${sw}/><path d="M66.5 44Q70 44 69.4 49Q68.8 53 66 53" fill="${SK}" ${sw}/>`;
+ const head=`<path d="M33 45C33 31 41 23 50 23C59 23 67 31 67 45C67 57 61 67 50 70C39 67 33 57 33 45Z" fill="${SK}" ${sw}/>`;
+ // expressions
+ const closed=`<path d="M41.5 47.5Q44 49.2 46.5 47.5M53.5 47.5Q56 49.2 58.5 47.5" ${sw} fill="none"/>`;
+ const open=x=>`<path d="M${x-2.6} 46.6Q${x} 45.2 ${x+2.6} 46.6" ${sw} fill="none"/><circle cx="${x}" cy="48" r="1.25" fill="${K}"/>`;
+ const e={happy:'h',excited:'x',love:'l',cheeky:'c',shy:'s',sleepy:'z',pouty:'p',sad:'d'}[expr]||'h';
+ let eyes=closed,brows='',mouth=`<path d="M46.8 59.4Q50 61.6 53.2 59.4" ${sw} fill="none"/>`;
+ if(e==='x'||e==='l')mouth=`<path d="M46 58.6Q50 59.4 54 58.6Q53 63.4 50 63.4Q47 63.4 46 58.6Z" fill="#b8434f" ${sw} stroke-width="1.2"/>`;
+ if(e==='c'){eyes=`<path d="M41.5 47.5Q44 49.2 46.5 47.5" ${sw} fill="none"/>`+open(56);mouth=`<path d="M46.8 60Q51 61.4 53.8 58.6" ${sw} fill="none"/>`}
+ if(e==='s'){eyes=open(44)+open(56);mouth=`<path d="M48 59.8Q50 60.8 52 59.8" ${sw} fill="none"/>`}
+ if(e==='z'){mouth=`<circle cx="50" cy="60" r="1.2" fill="none" ${sw} stroke-width="1.2"/>`}
+ if(e==='p'){eyes=open(44)+open(56);brows=`<path d="M41 42.4L46.6 43.8M59 42.4L53.4 43.8" ${sw} fill="none"/>`;mouth=`<path d="M47.2 60.6Q50 59.4 52.8 60.6" ${sw} fill="none"/>`}
+ if(e==='d'){eyes=open(44)+open(56);brows=`<path d="M41 43.8L46.6 42.4M59 43.8L53.4 42.4" ${sw} fill="none"/>`;mouth=`<path d="M47 61Q50 59 53 61" ${sw} fill="none"/>`}
+ const bo={l:.4,s:.45,x:.3}[e]||.2;
+ const nose=`<path d="M50.4 49.5Q48.6 53.8 51 54.6" ${sw} fill="none" stroke-width="1.2"/>`;
+ const blush=`<ellipse cx="40" cy="54.5" rx="3.2" ry="1.7" fill="#ff7f8a" opacity="${bo}"/><ellipse cx="60" cy="54.5" rx="3.2" ry="1.7" fill="#ff7f8a" opacity="${bo}"/>`;
+ const stache=P.includes('mustache')?`<path d="M45 56.4Q47.5 54.8 50 55.8Q52.5 54.8 55 56.4Q52.5 57.6 50 56.8Q47.5 57.6 45 56.4Z" fill="${K}"/>`:'';
+ let acc='';
+ if(P.includes('bindi')&&part)acc+=`<circle cx="50" cy="39.6" r="1.1" fill="#c0392b"/>`;
+ if(P.includes('tikka')&&part)acc+=`<path d="M50 28.5V34" stroke="${GC}" stroke-width="1"/><circle cx="50" cy="35.6" r="1.8" fill="${GC}" ${thin}/>`;
+ if(P.includes('jhumka'))acc+=[33.4,66.6].map(v=>`<path d="M${v-2.2} 58.4Q${v} 53.4 ${v+2.2} 58.4Z" fill="${GC}" ${thin}/><circle cx="${v}" cy="59.8" r=".7" fill="${GC}"/>`).join('');
+ if(P.includes('stars'))acc+=`<circle cx="33.4" cy="53.6" r="1.6" fill="${GC}" ${thin}/><circle cx="66.6" cy="53.6" r="1.6" fill="${GC}" ${thin}/>`;
+ if(P.includes('gajra')&&st==='bun')acc+=[0,1,2,3,4,5,6].map(k=>{const a=Math.PI*(.1+k*.133);return `<circle cx="${(50+8.8*Math.cos(a)).toFixed(1)}" cy="${(15+8.8*Math.sin(a)).toFixed(1)}" r="1.6" fill="#fff" ${thin} stroke-width=".6"/>`}).join('');
+ if(P.includes('clips'))acc+=`<rect x="36" y="32" width="6" height="2" rx="1" fill="#f6d365" ${thin} transform="rotate(-24 39 33)"/><rect x="58" y="32" width="6" height="2" rx="1" fill="#f9a8d4" ${thin} transform="rotate(24 61 33)"/>`;
+ if(P.includes('glasses'))acc+=`<g ${sw} fill="none" stroke-width="1.3"><circle cx="44" cy="47.4" r="5"/><circle cx="56" cy="47.4" r="5"/><path d="M49 46.8Q50 46 51 46.8M39 46.6L34.2 45.4M61 46.6L65.8 45.4"/></g>`;
+ if(P.includes('shades'))acc+=`<path d="M38.2 44.6H49V47.6Q49 52 43.6 52Q38.2 52 38.2 47.6Z" fill="${K}"/><path d="M51 44.6H61.8V47.6Q61.8 52 56.4 52Q51 52 51 47.6Z" fill="${K}"/><path d="M49 45.6H51M38.2 45L34 44M61.8 45L66 44" ${sw} fill="none" stroke-width="1.2"/><path d="M40 46.4L43 46" stroke="#fff" stroke-width=".8" opacity=".6" stroke-linecap="round"/>`;
+ if(P.includes('cap'))acc+=`<path d="M32 41C30.5 24 40 16 50.5 16C61 16 70 24 68.5 41C62 37.6 39 37.6 32 41Z" fill="#c8493f" ${sw}/><path d="M55 38.4C63 37.2 74 38.4 78.5 41.4C72 42.4 60 42 55 40.8Z" fill="#a33a32" ${sw}/><path d="M50.5 17V38" ${sw} fill="none" stroke-width=".8" opacity=".6"/>`;
+ if(P.includes('hat'))acc+=`<path d="M37 31C37 18.5 42.5 12.5 50 12.5C57.5 12.5 63 18.5 63 31Z" fill="#9a6a44" ${sw}/><path d="M37 26.5H63V30.5H37Z" fill="#4a2f1d" ${sw} stroke-width="1"/><path d="M26 32.5Q50 26 74 32.5Q50 37 26 32.5Z" fill="#9a6a44" ${sw}/>`;
+ if(P.includes('headphones'))acc+=`<path d="M31.5 46C30.5 27 39 17.5 50 17.5C61 17.5 69.5 27 68.5 46" stroke="${K}" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="28" y="42.5" width="7.5" height="12" rx="3.2" fill="${F}" ${sw}/><rect x="64.5" y="42.5" width="7.5" height="12" rx="3.2" fill="${F}" ${sw}/>`;
+ if(P.includes('pearls'))acc+=[...Array(9)].map((_,k)=>{const t=k/8;return `<circle cx="${(42+16*t).toFixed(1)}" cy="${(80.6+5.5*Math.sin(Math.PI*t)).toFixed(1)}" r="1.25" fill="#fff" ${thin} stroke-width=".5"/>`}).join('');
+ const blob=`<circle cx="62" cy="40" r="30" fill="${shade(F,.4)}"/>`;
+ const id='lv'+(_uid++);
+ return `<svg viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="${id}"><circle cx="50" cy="50" r="50"/></clipPath></defs><g clip-path="url(#${id})"><rect width="100" height="100" fill="#f4eee6"/>${blob}${back}${body}${neck}${coll}${ears}${head}${blush}${eyes}${brows}${nose}${mouth}${stache}${front}${acc}</g></svg>`;
+}
+const av=(c,s,e='happy')=>`<span class="av" style="--s:${s}px">${face(e,c)}</span>`;
+const S={names:['',''],ci:[0,1],mode:'couple',round:0,hearts:0,score:[0,0],first:[0,0],deck:[],cards:[]};
+const ch=i=>T().chars[S.ci[i]];
+const nm=i=>esc(S.names[i]);
+const isParty=()=>S.mode==='party';
+const PLAN=()=>PLANS[S.mode];
+const pool=list=>shuffle(list.filter(s=>S.mode==='couple'||!s.startsWith('♡')).map(s=>clean(s.replace(/^♡/,''))));
+function award(to,n){if(!n)return;if(!isParty())S.hearts+=n;else if(to==='both'){S.score[0]+=n;S.score[1]+=n}else if(to===0||to===1)S.score[to]+=n;refreshHud()}
+function hud(){
+ const n=PLAN().length,r=Math.min(S.round,n-1);
+ const segs=Array.from({length:n},(_,k)=>`<i class="${k<S.round?'d':k===S.round?'c':''}"></i>`).join('');
+ const sc=isParty()?`<div class="ps">${av(ch(0),22)}<b id="s0">${S.score[0]}</b><span>·</span><b id="s1">${S.score[1]}</b>${av(ch(1),22)}</div>`:`<div class="ps"><b id="hc">${S.hearts}</b><span>pts</span></div>`;
+ return `<header class="hud"><div class="hrow"><span class="eyebrow">Round ${pad(r+1)} <em>/ ${pad(n)}</em></span>${sc}<button class="icn" data-mute aria-label="Sound">${spk()}</button></div><div class="segs">${segs}</div></header>`;
+}
+function refreshHud(){const h=$('#hc');if(h)h.textContent=S.hearts;[0,1].forEach(i=>{const e=$('#s'+i);if(e)e.textContent=S.score[i]})}
+function nextRound(){S.round++;startRound()}
+
+/* ---------- title ---------- */
+function applyTheme(){const s=STY[TH],b=document.body.style;b.setProperty('--a',s.a);b.setProperty('--b',s.b);b.setProperty('--disp',s.f);b.setProperty('--dw',s.w);document.body.dataset.it=s.it}
+function title(){
+ applyTheme();
+ const P=MODE==='party',t=T(),best=+store.get('mr_best_'+TH,0),r=t.rounds;
+ app.innerHTML=`<header class="top"><span class="wm">Moodle</span><button class="icn" data-mute aria-label="Sound">${spk()}</button></header>
+ <main class="scr fade">
+  <section class="hero"><p class="eyebrow">The mood-reading game · ${P?'Party':'For two'}</p><h1 class="display brand">Moodle<i>.</i></h1><p class="edition">${clean(t.tab)} edition</p><p class="lede">${clean(t.tag)}</p><div class="pair" id="hp">${av(ch(0),56,'love')}${av(ch(1),56,'cheeky')}</div></section>
+  <section><span class="label">Theme</span><div class="chips">${Object.keys(THEMES).map(k=>`<button data-th="${k}" class="chip ${k===TH?'on':''}" style="--d:${STY[k].a}"><i></i>${clean(THEMES[k].tab)}</button>`).join('')}</div></section>
+  <section><span class="label">Mode</span><div class="seg"><button data-md="couple" class="${!P?'on':''}"><b>Couple</b><span>2 players · 10 rounds</span></button><button data-md="party" class="${P?'on':''}"><b>Party</b><span>2 teams · 12 rounds</span></button></div></section>
+  ${[0,1].map(i=>`<section class="panel pl"><div class="plh"><span class="label">${P?'Team':'Player'} ${i+1} · name &amp; character</span><span class="cn" id="cn${i}">as ${ch(i).name}</span></div><input id="n${i}" maxlength="14" autocomplete="off" placeholder="${P?(i?'Team name':'Team name'):(i?'Their name':'Your name')}" value="${esc(S.names[i])}"><div class="avs">${t.chars.map((c,k)=>`<button class="avb ${S.ci[i]===k?'on':''}" data-p="${i}" data-k="${k}" aria-label="${c.name}">${av(c,44)}</button>`).join('')}</div></section>`).join('')}
+  <button class="btn" id="go">Start the game <span>→</span></button>
+  <details class="panel how"><summary>How it works</summary><ol>
+   <li><b>${clean(r.read[1])}.</b> ${P?'One player':'One of you'} secretly picks how they'd honestly feel. ${P?'The other team':'The other'} gets two guesses — 3 points first try, 1 point second.</li>
+   <li><b>${clean(r.memory[1])}, ${clean(r.sync[1])}, ${clean(r.echo[1])}.</b> Quick skill rounds: matching, timing and recall.</li>
+   <li><b>${clean(r.card[1])}.</b> A playful dare, rated 1–3 by ${P?'the other team':'your partner'}.</li>
+   <li><b>${clean(r.final[1])}.</b> Both pick their own mood in secret. Exact match scores 5, a similar vibe scores 2.</li>
+   <li>${P?'Highest score wins.':`Score out of ${MAX} reveals your couple type.`}</li></ol></details>
+  ${best&&!P?`<p class="foot">Best on this device · ${best} / ${MAX}</p>`:''}
+ </main>`;
+ const save=()=>{S.names=[$('#n0').value,$('#n1').value]};
+ app.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{save();TH=b.dataset.th;store.set('mr_theme',TH);sfx.pop();const x=document.querySelector('.chips').scrollLeft;title();document.querySelector('.chips').scrollLeft=x});
+ app.querySelectorAll('[data-md]').forEach(b=>b.onclick=()=>{save();MODE=b.dataset.md;store.set('mr_mode',MODE);sfx.pop();title()});
+ app.querySelectorAll('.avb').forEach(b=>b.onclick=()=>{const p=+b.dataset.p;S.ci[p]=+b.dataset.k;app.querySelectorAll(`.avb[data-p="${p}"]`).forEach(x=>x.classList.toggle('on',x===b));$('#hp').innerHTML=av(ch(0),56,'love')+av(ch(1),56,'cheeky');$('#cn'+p).textContent='as '+ch(p).name;sfx.pop()});
+ $('#go').onclick=()=>{S.names=[$('#n0').value.trim()||(P?'Team 1':'Player 1'),$('#n1').value.trim()||(P?'Team 2':'Player 2')];sfx.good();newGame()};
+}
+function newGame(){S.mode=MODE;Object.assign(S,{round:0,hearts:0,score:[0,0],first:[0,0],deck:pool(T().scen),cards:pool(T().cards)});window.scrollTo(0,0);startRound()}
+
+/* ---------- rounds ---------- */
+function desc(t,p){
+ const P=isParty(),a=nm(p),b=nm(1-p);
+ switch(t){
+  case 'read':return P?`One player from <b>${a}</b> secretly picks how they'd honestly feel. <b>${b}</b> talks it over and gets two guesses.`:`<b>${a}</b> secretly picks how they'd honestly feel. <b>${b}</b> gets two guesses to read it.`;
+  case 'memory':return P?`<b>${a}</b> plays. Match all six pairs in 45 seconds — the whole team can help. Finish with 15 seconds left for a bonus.`:`Play together. Match all six pairs in 45 seconds. Finish with 15 seconds left for a bonus.`;
+  case 'card':return P?`One player from <b>${a}</b> performs a dare. <b>${b}</b> scores it.`:`<b>${a}</b> performs a dare. <b>${b}</b> scores it.`;
+  case 'sync':return P?`Head to head. One player per team takes a side and taps when the marker crosses the zone. Five beats, each faster and tighter.`:`One side each. Tap when the marker crosses the zone. Five beats, each faster and tighter.`;
+  case 'echo':return P?`<b>${a}</b> plays. Watch the sequence of moods, then repeat it. It grows every level.`:`Watch the sequence of moods, then repeat it. It grows every level.`;
+  case 'final':return P?`One player per team secretly picks <b>their own</b> mood. Exact match: both teams +5. Similar vibe: +2.`:`You each secretly pick <b>your own</b> mood. Exact match scores 5, a similar vibe scores 2.`;
+ }
+}
+function startRound(){
+ if(S.round>=PLAN().length)return end();
+ const r=PLAN()[S.round],ti=clean(T().rounds[r.t][1]);
+ const avs=isParty()&&(r.t==='memory'||r.t==='echo')?av(ch(r.p),52):av(ch(0),52,r.t==='final'?'love':'happy')+av(ch(1),52,r.t==='final'?'love':'happy');
+ app.innerHTML=hud()+`<main class="scr fade"><div class="num">${pad(S.round+1)}</div><div class="qhead"><p class="eyebrow">${KIND[r.t]}</p><h1 class="display sm">${ti}</h1><p class="lede">${desc(r.t,r.p)}</p></div><div class="pair">${avs}</div><button class="btn" id="go">Begin <span>→</span></button></main>`;
+ window.scrollTo(0,0);
+ $('#go').onclick=()=>{sfx.pop();window.scrollTo(0,0);({read:()=>readRound(r.p),memory:()=>memory(r.p),card:()=>cardRound(r.p),sync,echo:()=>echo(r.p),final:finale})[r.t]()};
+}
+function passScreen(to,next,msg){
+ const who=isParty()?`team ${nm(to)}`:nm(to);
+ app.innerHTML=hud()+`<main class="scr fade center" style="padding-top:28px">${av(ch(to),96,'shy')}<p class="eyebrow">Hand-off</p><h2 class="h2">Pass the phone to ${who}</h2><p class="lede">${msg||'Keep the screen hidden until it\'s in their hands.'}</p><button class="btn" id="rdy">${isParty()?`${nm(to)} is ready`:`I'm ${nm(to)} — ready`}</button></main>`;
+ window.scrollTo(0,0);
+ $('#rdy').onclick=()=>{sfx.pop();next()};
+}
+function resultScreen(t,sub,h,to){
+ const last=S.round===PLAN().length-1;
+ const lab=h?(isParty()&&to!==undefined?(to==='both'?'points · each team':`points · ${nm(to)}`):'points'):'no points';
+ app.innerHTML=hud()+`<main class="scr fade center"><div class="bigpts">${h?'+'+h:'0'}</div><p class="eyebrow">${lab}</p><h2 class="h2">${t}</h2><p class="lede">${sub}</p><button class="btn" id="nx">${last?'See the result':'Next round'} <span>→</span></button></main>`;
+ $('#nx').onclick=()=>{sfx.pop();nextRound()};
+}
+
+/* ---- mood reading ---- */
+function pickGrid(p,sc,opts,label,cmp,onLock){
+ let sel=null;
+ app.innerHTML=hud()+`<main class="scr fade"><div class="qhead"><span class="priv">${LOCK} Private · ${isParty()?`one ${nm(p)} player`:nm(p)}</span><p class="eyebrow">${label}</p><blockquote class="scn">${sc}</blockquote></div><div class="mgrid">${opts.map(m=>moodCard(m,cmp)).join('')}</div><div class="sticky"><button class="btn" id="lock" disabled>Lock it in</button></div></main>`;
+ app.querySelectorAll('.mc').forEach(b=>b.onclick=()=>{sel=b.dataset.m;app.querySelectorAll('.mc').forEach(x=>x.classList.toggle('sel',x===b));$('#lock').disabled=false;sfx.tap()});
+ $('#lock').onclick=()=>{sfx.pop();onLock(sel)};
+}
+function readRound(p){
+ const sc=S.deck.pop(),opts=shuffle(KEYS).slice(0,6);
+ pickGrid(p,sc,opts,'Be honest — how would you feel?',false,ans=>passScreen(1-p,()=>guess(p,sc,opts,ans),isParty()?'Huddle up and agree on one answer before you tap.':undefined));
+}
+function guess(p,sc,opts,ans){
+ const g=1-p;let tries=0,done=false;
+ const q=isParty()?`${nm(g)} — how would ${nm(p)}'s player feel?`:`${nm(g)} — how does ${nm(p)} feel?`;
+ app.innerHTML=hud()+`<main class="scr fade"><div class="qhead"><p class="eyebrow">${q}</p><blockquote class="scn">${sc}</blockquote></div><div class="hintbar"><span id="hint">First guess 3 pts · second guess 1 pt</span><span class="tries"><i id="t1"></i><i id="t2"></i></span></div><div class="mgrid">${shuffle(opts).map(m=>moodCard(m,false)).join('')}</div></main>`;
+ app.querySelectorAll('.mc').forEach(b=>b.onclick=()=>{
+  if(done||b.classList.contains('wrong'))return;tries++;$('#t'+(3-tries)).classList.add('x');
+  if(b.dataset.m===ans){done=true;b.classList.add('right');sfx.good();const h=tries===1?3:1;if(tries===1)S.first[g]++;award(g,h);setTimeout(()=>reveal(p,ans,h),700)}
+  else{b.classList.add('wrong');sfx.bad();if(tries>=2){done=true;setTimeout(()=>reveal(p,ans,0),700)}else $('#hint').textContent='Not quite — one guess left'}
+ });
+}
+function reveal(p,ans,h){
+ const P=isParty(),who=P?`${nm(p)}'s player`:nm(p);
+ const line=h===3?'Read perfectly, first try.':h===1?'Got there on the second guess.':'A surprise this time.';
+ app.innerHTML=hud()+`<main class="scr fade"><p class="eyebrow">${who} felt</p>${heroMood(ans,ch(p))}<div class="res"><span class="pts">${h?'+'+h:'0'}</span><p><b>${line}</b>${h?(P?`Points to ${nm(1-p)}.`:'Added to your score.'):'No points this round.'}</p></div><div class="panel talk"><span class="label">Talk about it</span><p>${P?`Player, tell the room <i>why</i> you'd feel that way.`:`${nm(p)}, tell ${nm(1-p)} <i>why</i> you'd feel that way.`}</p></div><button class="btn" id="nx">Next round <span>→</span></button></main>`;
+ window.scrollTo(0,0);
+ $('#nx').onclick=()=>{sfx.pop();nextRound()};
+}
+
+/* ---- memory ---- */
+function memory(team){
+ const set=[0,1].flatMap(p=>shuffle(KEYS).slice(0,3).map(m=>({p,m,k:p+m})));
+ const tiles=shuffle([...set,...set]);
+ let first=null,lock=false,found=0,left=45,timer=null,started=false,over=false;
+ app.innerHTML=hud()+`<main class="scr fade"><div class="row"><div><p class="eyebrow">${clean(T().rounds.memory[1])}${isParty()?` · ${nm(team)}`:''}</p><h2 class="h2">Match the pairs</h2></div><span class="pill" id="tm">45s</span></div><div class="tbar"><div id="tb"></div></div><div class="mem">${tiles.map((t,i)=>`<button class="tile" data-i="${i}"><div class="in"><div class="bk"><span></span></div><div class="fr" style="${gv(t.m)}">${glyph(t.m,30)}${av(ch(t.p),22)}</div></div></button>`).join('')}</div><p class="hint" id="mh">A pair is the same mood <i>and</i> the same person. The clock starts on your first tap.</p></main>`;
+ const el=i=>app.querySelector(`.tile[data-i="${i}"]`);
+ const tick=()=>{left--;$('#tm').textContent=left+'s';$('#tb').style.width=(left/45*100)+'%';if(left<=10)tone(520,.03,.03);if(left<=0)finish(false)};
+ const finish=all=>{if(over)return;over=true;clearInterval(timer);const bonus=all&&left>=15?2:0,h=found+bonus;award(team,h);
+  setTimeout(()=>resultScreen(all?'All pairs found':"Time's up",all?`${left} seconds to spare${bonus?' — speed bonus included':''}.`:`${found} of 6 pairs found.`,h,team),700)};
+ app.querySelectorAll('.tile').forEach(b=>b.onclick=()=>{
+  const i=+b.dataset.i;if(over||lock||b.classList.contains('flip'))return;
+  if(!started){started=true;timer=setInterval(tick,1000);$('#mh').textContent='Go.'}
+  b.classList.add('flip');sfx.tap();
+  if(first===null){first=i;return}
+  const f=first;first=null;
+  if(tiles[f].k===tiles[i].k){found++;el(f).classList.add('ok');b.classList.add('ok');sfx.good();if(found===6)finish(true)}
+  else{lock=true;setTimeout(()=>{el(f).classList.remove('flip');b.classList.remove('flip');lock=false},750)}
+ });
+}
+
+/* ---- dare ---- */
+function cardRound(p){
+ const txt=S.cards.pop(),t=T(),P=isParty();
+ app.innerHTML=hud()+`<main class="scr fade"><p class="eyebrow">${clean(t.cardTop)}</p><div class="dare"><div class="dare-in"><p>${txt}</p><div class="by">${av(ch(p),32,'cheeky')}<span>${P?`Performed by a ${nm(p)} player`:`Performed by ${nm(p)}`}</span></div></div></div><div><span class="label">${nm(1-p)}, ${t.rq}</span><div class="rate">${t.rate.map((l,n)=>`<button class="rb" data-n="${n+1}"><span class="dots">${'<i></i>'.repeat(n+1)}</span>${l}</button>`).join('')}</div></div></main>`;
+ app.querySelectorAll('.rb').forEach(b=>b.onclick=()=>{const n=+b.dataset.n;award(p,n);sfx.good();resultScreen(t.rate[n-1],`${nm(1-p)} scored ${nm(p)} ${n} of 3.`,n,p)});
+}
+
+/* ---- sync ---- */
+function sync(){
+ const cs=[ch(0),ch(1)],W=[28,23,19,15,12],D=[1900,1700,1500,1320,1150],P=isParty();
+ app.innerHTML=hud()+`<main class="scr fade"><div class="row"><div><p class="eyebrow">${clean(T().rounds.sync[1])}</p><h2 class="h2">Tap inside the zone</h2></div><span class="pill" id="bt">0 / 5</span></div><div class="track" id="trk"><div class="zone" id="zn"></div><div class="mk" id="mk"></div></div><p class="msg" id="msg">${P?'One player per side':'One side each'}</p><div class="taps">${[0,1].map(i=>`<button class="tap" id="t${i}" style="--pc:var(--${i?'b':'a'})">${av(cs[i],64)}<b>${nm(i)}</b><span id="h${i}">0 hits</span></button>`).join('')}</div><button class="btn" id="bg">Start</button></main>`;
+ let taps=[null,null],live=false,pos=4,hits=[0,0];
+ [0,1].forEach(i=>$('#t'+i).addEventListener('pointerdown',e=>{e.preventDefault();if(!live||taps[i])return;taps[i]={pos,t:performance.now()};$('#t'+i).classList.add('hit');sfx.tap();
+  const d=document.createElement('div');d.className='tk';d.style.left=pos+'%';d.style.background=`var(--${i?'b':'a'})`;$('#trk').appendChild(d)}));
+ const run=dur=>new Promise(res=>{const st=performance.now(),mk=$('#mk');const f=now=>{const k=Math.min(1,(now-st)/dur);pos=4+k*92;mk.style.left=pos+'%';k<1?requestAnimationFrame(f):res()};requestAnimationFrame(f)});
+ $('#bg').onclick=async()=>{
+  $('#bg').style.visibility='hidden';
+  for(const n of ['3','2','1']){$('#msg').textContent=n;tone(520,.07,.04);await sleep(600)}
+  for(let b=0;b<5;b++){
+   $('#bt').textContent=`${b+1} / 5`;$('#zn').style.width=W[b]+'%';taps=[null,null];
+   app.querySelectorAll('.tk').forEach(x=>x.remove());app.querySelectorAll('.tap').forEach(x=>x.classList.remove('hit'));
+   $('#mk').style.left='4%';$('#msg').textContent='Now';await sleep(250);
+   live=true;await run(D[b]);live=false;
+   const inz=taps.map(t=>!!t&&Math.abs(t.pos-50)<=W[b]/2),n=inz.filter(Boolean).length;
+   inz.forEach((ok,i)=>{if(ok){hits[i]++;award(i,1);$('#h'+i).textContent=hits[i]+(hits[i]===1?' hit':' hits')}});
+   $('#msg').textContent=n===2&&Math.abs(taps[0].t-taps[1].t)<160?'Perfectly in sync':n===2?'Both inside':n===1?`${nm(inz[0]?0:1)} landed it`:'Missed';
+   n?sfx.good():sfx.bad();await sleep(1150);
+  }
+  const tot=hits[0]+hits[1];
+  if(P){const w=hits[0]===hits[1]?-1:hits[0]>hits[1]?0:1;resultScreen(w<0?'Dead heat':`${nm(w)} wins the duel`,`${nm(0)} ${hits[0]}/5 · ${nm(1)} ${hits[1]}/5`,tot)}
+  else resultScreen(tot>=8?'Perfectly in sync':tot>=5?'Good rhythm':'A little off-beat',`${tot} of 10 taps landed in the zone.`,tot);
+ };
+}
+
+/* ---- echo ---- */
+function echo(team){
+ const pads=['happy','pouty','shy','sleepy'],c=ch(team!==undefined?team:(Math.random()<.5?0:1));
+ let seq=[0,1,2].map(()=>Math.random()*4|0),level=0,input=[],accepting=false,got=0;
+ app.innerHTML=hud()+`<main class="scr fade"><div class="row"><div><p class="eyebrow">${clean(T().rounds.echo[1])}${isParty()?` · ${nm(team)}`:''}</p><h2 class="h2">Repeat the sequence</h2></div><span class="pill" id="lv">Level 1 / 4</span></div><div class="ecwrap"><div class="eorb" id="ef">${av(c,112)}</div></div><p class="msg" id="msg">Watch, then repeat</p><div class="pads mgrid">${pads.map((m,i)=>moodCard(m,true,`data-i="${i}"`)).join('')}</div><button class="btn" id="bg">Start</button></main>`;
+ const pad_=i=>app.querySelector(`.mc[data-i="${i}"]`),ef=$('#ef');
+ const flash=async(i,ms)=>{const m=pads[i];ef.style.cssText=gv(m);ef.classList.add('on');ef.innerHTML=glyph(m,68);pad_(i).classList.add('lit');tone(440+i*130,.16);await sleep(ms);pad_(i).classList.remove('lit');ef.classList.remove('on');ef.innerHTML=av(c,112)};
+ const play=async()=>{accepting=false;$('#msg').textContent='Watch closely';await sleep(600);const sp=level<2?620:480;for(const i of seq){await flash(i,sp);await sleep(200)}input=[];accepting=true;$('#msg').textContent='Your turn'};
+ const finish=()=>{const bonus=level>=4?2:0;award(team,bonus);setTimeout(()=>resultScreen(level>=4?'Flawless recall':got>=2?'Sharp memory':'Tricky one',`Cleared ${got} of 4 levels${bonus?' — perfect-run bonus included':''}.`,got+bonus,team),900)};
+ app.querySelectorAll('.pads .mc').forEach(b=>b.onclick=async()=>{
+  if(!accepting)return;const i=+b.dataset.i;input.push(i);b.classList.add('lit');setTimeout(()=>b.classList.remove('lit'),160);tone(440+i*130,.1);
+  if(seq[input.length-1]!==i){accepting=false;sfx.bad();$('#msg').textContent='Wrong mood';return finish()}
+  if(input.length===seq.length){accepting=false;got++;level++;award(team,1);sfx.good();
+   if(level>=4){$('#msg').textContent='All four levels';return finish()}
+   seq.push(Math.random()*4|0);$('#lv').textContent=`Level ${level+1} / 4`;$('#msg').textContent='Correct — one more';await sleep(900);play()}
+ });
+ $('#bg').onclick=()=>{$('#bg').style.visibility='hidden';play()};
+}
+
+/* ---- finale ---- */
+function finale(){
+ const sc=S.deck.pop(),picks=[null,null],lbl='Pick your own honest mood';
+ pickGrid(0,sc,KEYS,lbl,true,m=>{picks[0]=m;passScreen(1,()=>pickGrid(1,sc,KEYS,lbl,true,m2=>{picks[1]=m2;
+  app.innerHTML=hud()+`<main class="scr fade center" style="padding-top:28px"><div class="pair">${av(ch(0),72)}${av(ch(1),72)}</div><p class="eyebrow">Both locked in</p><h2 class="h2">Reveal together</h2><p class="lede">${isParty()?'Gather everyone around the screen.':'Sit side by side for this one.'}</p><button class="btn" id="rv">Reveal</button></main>`;
+  $('#rv').onclick=()=>finalReveal(sc,picks)}),'Pick <b>your own</b> honest mood — not a guess of theirs.')});
+}
+function finalReveal(sc,[a,b]){
+ const same=a===b,fam=!same&&FAM[a]===FAM[b],h=same?5:fam?2:0;award('both',h);same||fam?sfx.good():sfx.bad();
+ const tx=T().same;
+ app.innerHTML=hud()+`<main class="scr fade"><div class="qhead"><p class="eyebrow">${clean(T().rounds.final[1])}</p><blockquote class="scn" style="font-size:20px">${sc}</blockquote></div><div class="duo">${[a,b].map((m,i)=>heroMood(m,ch(i))).join('')}</div><div class="res"><span class="pts">${h?'+'+h:'0'}</span><p><b>${same?clean(tx[0]):fam?'Close vibes':'Opposite moods'}</b>${same?clean(tx[1]):fam?'Not identical, but the same kind of feeling.':'Talk it through — that\'s the interesting part.'}${h&&isParty()?' Points to each team.':''}</p></div><button class="btn" id="nx">See the result <span>→</span></button></main>`;
+ window.scrollTo(0,0);
+ $('#nx').onclick=()=>{sfx.pop();S.round++;end()};
+}
+
+/* ---------- end ---------- */
+function end(){
+ const t=T(),f=S.first;window.scrollTo(0,0);
+ const reader=f[0]===f[1]?'Evenly matched mood-readers':`${nm(f[0]>f[1]?0:1)} read moods best`;
+ const stats=`<div class="stats"><div><span>${nm(0)} read ${nm(1)} first try</span><b>${f[0]} / 2</b></div><div><span>${nm(1)} read ${nm(0)} first try</span><b>${f[1]} / 2</b></div><div><span>Best reader</span><b>${reader}</b></div></div>`;
+ const top=`<header class="top"><span class="wm">Moodle</span><button class="icn" data-mute aria-label="Sound">${spk()}</button></header>`;
+ if(isParty()){
+  const [a,b]=S.score,w=a===b?-1:a>b?0:1;
+  app.innerHTML=top+`<main class="scr fade center" style="padding-top:12px"><p class="eyebrow">${w<0?'Final whistle':'The winner'}</p><h1 class="display sm">${w<0?clean(t.tie):`${nm(w)}<span>${clean(t.win)}</span>`}</h1>
+  <div class="board">${[0,1].map(i=>`<div class="panel ${w===i?'w':''}">${w===i?'<em>Winner</em>':'<em style="color:var(--dim)">&nbsp;</em>'}${av(ch(i),64,w<0?'happy':w===i?'excited':'pouty')}<b>${S.score[i]}</b><span>${nm(i)}</span></div>`).join('')}</div>${stats}
+  <div class="btns"><button class="btn" id="again">Rematch</button><button class="btn ghost" id="new">Change teams or theme</button></div></main>`;
+ }else{
+  const h=S.hearts,k=h>=38?0:h>=28?1:h>=18?2:3,[tn,td]=t.tiers[k],R=52,C=2*Math.PI*R;
+  const best=+store.get('mr_best_'+TH,0),nb=h>best;if(nb)store.set('mr_best_'+TH,h);
+  app.innerHTML=top+`<main class="scr fade center" style="padding-top:12px"><div class="pair">${av(ch(0),56,'love')}${av(ch(1),56,'love')}</div><p class="eyebrow">Your couple type</p><h1 class="display sm"><span>${tn}</span></h1><p class="lede">${td}</p>
+  <div class="scorewrap"><svg class="ring" viewBox="0 0 120 120"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--a)"/><stop offset="1" style="stop-color:var(--b)"/></linearGradient></defs><circle cx="60" cy="60" r="${R}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/><circle id="rp" cx="60" cy="60" r="${R}" fill="none" stroke="url(#rg)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1.6s cubic-bezier(.2,.7,.2,1)"/></svg><div><b>${h}</b><span>of ${MAX}${nb?' · new best':''}</span></div></div>
+  ${stats}<div class="btns"><button class="btn" id="again">Play again</button><button class="btn ghost" id="new">Change players or theme</button></div></main>`;
+  setTimeout(()=>{const r=$('#rp');if(r)r.style.strokeDashoffset=C*(1-Math.min(1,h/MAX))},120);
+ }
+ sfx.good();
+ $('#again').onclick=()=>{sfx.pop();newGame()};$('#new').onclick=()=>{sfx.pop();title()};
+}
+title();
+</script>
+</body>
+</html>

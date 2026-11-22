@@ -56,7 +56,9 @@ Anime · Bollywood · Hollywood · Kitty Party · Gen Z · Millennial · Corpora
 
 ```
 Moodle/
-├── index.html   # the entire game: markup, styles, data and logic
+├── index.html            # the entire game: markup, styles, data and logic
+├── favicon.svg           # browser tab icon
+├── apple-touch-icon.png  # home-screen icon (iOS)
 └── README.md
 ```
 
